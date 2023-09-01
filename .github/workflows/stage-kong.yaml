@@ -1,0 +1,49 @@
+name: Stage Kong changes for PRD in a PR
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - konnect/kong-staged.yaml
+
+jobs:
+
+  stage-kong-for-prd:
+    name: Stage Kong Changes To Sync
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup deck
+        uses: kong/setup-deck@v1
+        with:
+          deck-version: '1.26.0'
+          wrapper: false
+
+      - name: Copy the staged file to the "production" file
+        run: cp konnect/kong-staged.yaml konnect/kong.yaml
+
+      - name: deck diff
+        id: deck-diff
+        # deck diff results in a multi-line output, which requires some
+        #  bash gymnastics to handle and pass through to the next job.
+        #  See: https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#example-of-a-multiline-string
+        run: |
+          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          echo "DIFF<<$EOF" >> $GITHUB_ENV
+          deck diff -s konnect/kong.yaml \
+            --konnect-runtime-group-name hello-world \
+            --konnect-token ${{ secrets.KONNECT_PAT }} >> $GITHUB_ENV
+          echo "$EOF" >> $GITHUB_ENV
+
+      - name: Create PR to stage changes for deployment to Kong Konnect 
+        uses: peter-evans/create-pull-request@v5
+        with:
+          title: "❗PRD❗: Staged changes for Kong Konnect deployment"
+          branch: "konnect/sync"
+          labels: "konnect,kong,apiops"
+          body: "Merging this PR will result in the following changes sync'd to Konnect \n\n ```\n${{env.DIFF}}\n```"
+

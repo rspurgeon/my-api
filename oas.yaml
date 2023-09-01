@@ -1,0 +1,30 @@
+openapi: 3.0.0
+info:
+  title: Hello World API
+  version: 1.0.0
+servers:
+  - url: http://hello-world:3000
+paths:
+  /hello:
+    get:
+      summary: Get Hello World message
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+      x-swagger-router-controller: helloController
+      operationId: getHelloMessage
+
+components:
+  schemas:
+    Error:
+      type: object
+      properties:
+        message:
+          type: string

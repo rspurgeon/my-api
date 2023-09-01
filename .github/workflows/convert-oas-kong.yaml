@@ -1,0 +1,38 @@
+name: Convert OAS to Kong
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - oas.yaml
+
+jobs:
+  oas-to-kong:
+    name: Convert OAS to Kong configuration and patch with plugins
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup deck
+        uses: kong/setup-deck@v1
+        with:
+          deck-version: '1.26.0'
+          wrapper: false
+
+      - name: Convert OAS to Kong
+        run: |
+          deck file openapi2kong -s oas.yaml \
+            -o konnect/kong-staged.yaml
+
+      - name: Add Rate Limiting Plugin to All Services 
+        run: |
+          deck file add-plugins --state konnect/kong-staged.yaml \
+            --config '{"name":"rate-limiting","config":{"second":5}}' \
+            --selector "$.services[*]" \
+            --overwrite --output-file konnect/kong-staged.yaml
+
+      - name: Create PR for changed Kong Gateway Configuration
+        uses: peter-evans/create-pull-request@v5
+        with:
+          title: Stage Kong Gateway Configuration

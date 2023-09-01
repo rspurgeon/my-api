@@ -1,0 +1,30 @@
+name: Deploy Kong changes to PRD
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - konnect/kong.yaml 
+
+jobs:
+
+  deploy-kong:
+    name: Deploy Kong to PRD
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup deck
+        uses: kong/setup-deck@v1
+        with:
+          deck-version: '1.26.0'
+          wrapper: false
+
+      - name: deck sync
+        run: |
+          deck sync -s konnect/kong.yaml \
+              --konnect-runtime-group-name hello-world \
+              --konnect-token ${{ secrets.KONNECT_PAT }}
