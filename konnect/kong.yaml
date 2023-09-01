@@ -1,0 +1,25 @@
+_format_version: "3.0"
+services:
+- host: hello-world
+  id: 1350cda5-ffc4-530a-a19a-1618371c9d7b
+  name: hello-world-api
+  path: /
+  plugins:
+  - config:
+      second: 5
+    name: rate-limiting
+  port: 3000
+  protocol: http
+  routes:
+  - id: 982447eb-9561-5856-b778-080e807d5d50
+    methods:
+    - GET
+    name: hello-world-api_gethellomessage
+    paths:
+    - ~/hello$
+    plugins: []
+    regex_priority: 200
+    strip_path: false
+    tags: []
+  tags: []
+upstreams: []
